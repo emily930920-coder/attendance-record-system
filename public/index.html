@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#667eea">
+    <title>📋 工时记录系统</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1>📋 工时记录系统</h1>
+            <div class="date-display" id="dateDisplay"></div>
+            <div class="user-info">
+                <span id="userName">用户</span>
+                <button class="user-btn" id="userBtn">切换用户</button>
+            </div>
+        </header>
+
+        <!-- 主打卡区域 -->
+        <div class="main-card">
+            <div class="time-display" id="currentTime">00:00:00</div>
+            <div class="action-buttons">
+                <button class="action-btn clock-in" id="clockInBtn">
+                    <span class="emoji">⏰</span>
+                    <span>上班打卡</span>
+                </button>
+                <button class="action-btn clock-out" id="clockOutBtn">
+                    <span class="emoji">🏠</span>
+                    <span>下班打卡</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 今日记录 -->
+        <div class="record-card">
+            <h2>📅 今日记录</h2>
+            <div class="record-item">
+                <span class="label">上班时间:</span>
+                <span class="value" id="todayClockIn">未打卡</span>
+            </div>
+            <div class="record-item">
+                <span class="label">下班时间:</span>
+                <span class="value" id="todayClockOut">未打卡</span>
+            </div>
+            <div class="record-item">
+                <span class="label">工作时长:</span>
+                <span class="value" id="todayWorkHours">0.00 小时</span>
+            </div>
+        </div>
+
+        <!-- 本月统计 -->
+        <div class="stats-card">
+            <h2>📊 本月统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">工作天数</div>
+                    <div class="stat-value" id="workDays">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">总工时</div>
+                    <div class="stat-value" id="totalHours">0.00</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">平均工时</div>
+                    <div class="stat-value" id="avgHours">0.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 本月记录 -->
+        <div class="history-card">
+            <div class="history-header">
+                <h2>📖 本月记录</h2>
+                <button class="add-btn" id="addBtn">➕ 手动添加</button>
+            </div>
+            <div class="history-table">
+                <div class="table-header">
+                    <div class="th">日期</div>
+                    <div class="th">上班</div>
+                    <div class="th">下班</div>
+                    <div class="th">工时</div>
+                    <div class="th">操作</div>
+                </div>
+                <div class="table-body" id="historyBody">
+                    <!-- 动态生成记录 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能按钮 -->
+        <div class="footer-actions">
+            <button class="footer-btn" id="exportBtn">📤 导出数据</button>
+            <button class="footer-btn" id="syncBtn">🔄 同步数据</button>
+            <div class="sync-status" id="syncStatus">已同步</div>
+        </div>
+    </div>
+
+    <!-- 手动添加记录弹窗 -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>手动添加记录</h3>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="addDate" required>
+                </div>
+                <div class="form-group">
+                    <label>上班时间</label>
+                    <input type="time" id="addClockIn" required>
+                </div>
+                <div class="form-group">
+                    <label>下班时间</label>
+                    <input type="time" id="addClockOut">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel" id="cancelAdd">取消</button>
+                    <button class="btn btn-primary" id="confirmAdd">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑记录弹窗 -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑记录</h3>
+                <button class="close-btn" id="closeEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="editDate" required>
+                </div>
+                <div class="form-group">
+                    <label>上班时间</label>
+                    <input type="time" id="editClockIn" required>
+                </div>
+                <div class="form-group">
+                    <label>下班时间</label>
+                    <input type="time" id="editClockOut">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel" id="cancelEdit">取消</button>
+                    <button class="btn btn-primary" id="confirmEdit">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 用户选择弹窗 -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>选择用户</h3>
+                <button class="close-btn" id="closeUserModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="userInput" placeholder="请输入用户名">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel" id="cancelUser">取消</button>
+                    <button class="btn btn-primary" id="confirmUser">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "attendance-record-system",
+  "version": "1.0.0",
+  "description": "一个功能完善的工时记录系统，支持多用户、离线模式、数据同步等特性",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/check-storage.js && node server/server.js",
+    "dev": "nodemon server/server.js",
+    "start:simple": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "keywords": [
+    "attendance",
+    "time-tracking",
+    "pwa"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

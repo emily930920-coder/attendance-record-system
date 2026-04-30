@@ -1,4 +1,5 @@
 services:
+  # Web服务
   - type: web
     name: attendance-system
     env: node
@@ -11,3 +12,13 @@ services:
       - key: PORT
         value: 10000
     healthCheckPath: /api/health
+
+  # 定时备份任务（每天凌晨2点执行）
+  - type: cron
+    name: attendance-backup
+    env: node
+    plan: free
+    schedule: "0 2 * * *"  # 每天凌晨2点（UTC时间）
+    buildCommand: npm install
+    startCommand: npm run backup
+    envVarsFrom: attendance-system  # 继承Web服务的环境变量

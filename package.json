@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node server/check-storage.js && node server/server.js",
     "dev": "nodemon server/server.js",
-    "start:simple": "node server/server.js"
+    "start:simple": "node server/server.js",
+    "backup": "node scripts/backup.js"
   },
   "engines": {
     "node": ">=16.0.0",

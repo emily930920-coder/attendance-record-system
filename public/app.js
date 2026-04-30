@@ -21,6 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
 function initApp() {
     updateDateTime();
     document.getElementById('userName').textContent = currentUser;
+    
+    // 检测是否为Render部署环境
+    const isRenderEnv = window.location.hostname.includes('onrender.com') || 
+                        window.location.hostname.includes('render.com');
+    
+    if (isRenderEnv) {
+        // 显示演示环境提示
+        const demoNotice = document.getElementById('demoNotice');
+        if (demoNotice) {
+            demoNotice.style.display = 'block';
+        }
+        
+        // 在标题后添加演示标识
+        const title = document.querySelector('.header h1');
+        if (title && !title.textContent.includes('演示')) {
+            title.textContent = '📋 工时记录系统 (演示版)';
+        }
+    }
 }
 
 // 设置事件监听器

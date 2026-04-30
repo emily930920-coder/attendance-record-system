@@ -183,11 +183,12 @@ async function startServer() {
         
         // 显示备份状态
         const backupStatus = getBackupStatus();
-        if (backupStatus.hasWebhook || backupStatus.hasDiscord) {
+        if (backupStatus.hasWebhook || backupStatus.hasDiscord || backupStatus.hasGitHub) {
             console.log('');
             console.log('🔄 实时备份配置:');
             if (backupStatus.hasWebhook) console.log('  ✅ Webhook备份已配置');
             if (backupStatus.hasDiscord) console.log('  ✅ Discord备份已配置');
+            if (backupStatus.hasGitHub) console.log('  ✅ GitHub自动备份已配置');
             console.log('  💾 每次数据变更将自动备份');
             console.log('');
         }

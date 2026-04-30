@@ -1,9 +1,10 @@
-const fetch = require('node-fetch');
-
 /**
  * 实时备份模块
  * 每次数据变更时自动备份
  */
+
+// 导入GitHub备份模块
+const { backupToGit, getGitBackupStatus } = require('./backup-github');
 
 // 备份配置
 const BACKUP_CONFIG = {
@@ -25,6 +26,7 @@ async function sendToWebhook(url, data) {
     if (!url) return false;
     
     try {
+        const fetch = require('node-fetch');
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -52,33 +54,57 @@ async function sendToDiscord(data) {
     if (!BACKUP_CONFIG.discordWebhook) return false;
     
     try {
-        // 简化数据以适应Discord限制
-        const summary = {
-            user: data.user,
-            recordCount: data.records ? data.records.length : 0,
-            lastUpdate: new Date().toISOString()
-        };
+        const fetch = require('node-fetch');
         
-        const response = await fetch(BACKUP_CONFIG.discordWebhook, {
+        // 准备JSON数据
+        const jsonData = JSON.stringify(data, null, 2);
+        const recordCount = data.records ? data.records.length : 0;
+        
+        // 如果JSON数据太长，截断并提示
+        const maxLength = 1900; // Discord限制约2000字符，留一些余地
+        let jsonContent = jsonData;
+        let isTruncated = false;
+        
+        if (jsonData.length > maxLength) {
+            jsonContent = jsonData.substring(0, maxLength) + '\n... (数据已截断)';
+            isTruncated = true;
+        }
+        
+        // 发送第一条消息：摘要信息
+        const summaryResponse = await fetch(BACKUP_CONFIG.discordWebhook, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                content: `📋 数据更新 - 用户: ${data.user}`,
+                content: `📋 **工时记录备份** - 用户: \`${data.user}\``,
                 embeds: [{
-                    title: '实时备份',
-                    description: `记录数: ${summary.recordCount}`,
+                    title: '📊 数据摘要',
+                    description: `- 记录总数: **${recordCount}**\n- 备份时间: ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}${isTruncated ? '\n- ⚠️ 数据较大，已分条发送' : ''}`,
                     color: 0x5865F2,
                     timestamp: new Date().toISOString(),
                     footer: {
-                        text: '工时记录系统'
+                        text: '工时记录系统 - 实时备份'
                     }
                 }]
             })
         });
         
-        return response.ok;
+        // 稍微延迟，避免消息顺序混乱
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // 发送第二条消息：完整JSON数据
+        const jsonResponse = await fetch(BACKUP_CONFIG.discordWebhook, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content: '```json\n' + jsonContent + '\n```'
+            })
+        });
+        
+        return summaryResponse.ok && jsonResponse.ok;
     } catch (error) {
         console.error('Discord备份失败:', error.message);
         return false;
@@ -100,20 +126,47 @@ async function performBackup(userData) {
     
     // 尝试主Webhook
     if (BACKUP_CONFIG.webhookUrl) {
+        console.log('📤 尝试发送到主Webhook...');
         const result = await sendToWebhook(BACKUP_CONFIG.webhookUrl, userData);
         if (result) {
             console.log('✅ Webhook备份成功');
             success = true;
+        } else {
+            console.log('❌ Webhook备份失败');
         }
     }
     
-    // 尝试Discord（静默失败）
+    // 尝试Discord
     if (BACKUP_CONFIG.discordWebhook) {
-        await sendToDiscord(userData);
+        console.log('📤 尝试发送到Discord...');
+        console.log('Discord URL:', BACKUP_CONFIG.discordWebhook.substring(0, 50) + '...');
+        const result = await sendToDiscord(userData);
+        if (result) {
+            console.log('✅ Discord备份成功');
+            success = true;
+        } else {
+            console.log('❌ Discord备份失败');
+        }
     }
     
-    if (!success && !BACKUP_CONFIG.webhookUrl) {
+    // 尝试GitHub备份
+    const gitStatus = getGitBackupStatus();
+    if (gitStatus.enabled) {
+        console.log('📤 尝试备份到GitHub...');
+        const gitResult = await backupToGit(userData);
+        if (gitResult.success) {
+            console.log('✅ GitHub备份成功:', gitResult.path);
+            success = true;
+        } else {
+            console.log('❌ GitHub备份失败:', gitResult.message);
+        }
+    }
+    
+    if (!success && !BACKUP_CONFIG.webhookUrl && !BACKUP_CONFIG.discordWebhook && !gitStatus.enabled) {
         // 如果没有配置webhook，输出到日志
+        console.log('💾 数据快照:', JSON.stringify(userData, null, 2));
+    } else if (!success) {
+        console.log('⚠️  所有备份方式都失败，输出数据快照:');
         console.log('💾 数据快照:', JSON.stringify(userData, null, 2));
     }
     
@@ -183,10 +236,12 @@ function setBackupEnabled(enabled) {
  * 获取备份状态
  */
 function getBackupStatus() {
+    const gitStatus = getGitBackupStatus();
     return {
         enabled: BACKUP_CONFIG.enabled,
         hasWebhook: !!BACKUP_CONFIG.webhookUrl,
         hasDiscord: !!BACKUP_CONFIG.discordWebhook,
+        hasGitHub: gitStatus.enabled,
         queueLength: backupQueue.length
     };
 }

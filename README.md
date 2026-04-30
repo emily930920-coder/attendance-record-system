@@ -20,6 +20,7 @@
 - ✅ 本月统计报表（工作天数、总工时、平均工时）
 - ✅ 历史记录查看和管理
 - ✅ 服务端数据存储（不需要数据库）
+- ✅ **多重实时备份**（Discord + GitHub自动备份）
 - ✅ WiFi/5G 局域网访问
 - ✅ 离线模式支持（PWA）
 - ✅ 智能数据同步
@@ -101,31 +102,92 @@ npm start
 3. 离线时的数据会保存在本地
 4. 恢复网络后点击"同步数据"按钮，或等待自动同步（每分钟一次）
 
+### 数据备份 🔒
+
+系统支持多重自动备份，确保数据安全：
+
+#### 1. Discord实时备份（推荐）
+
+每次打卡后自动发送到Discord：
+- ✅ 即时查看（移动端友好）
+- ✅ 完整JSON数据格式
+- ✅ 永久保存在Discord频道
+
+**配置方法**：查看 [Discord配置教程.md](Discord配置教程.md)
+
+#### 2. GitHub自动备份（推荐）
+
+每次数据变更自动提交到GitHub：
+- ✅ 版本历史记录
+- ✅ 可随时恢复任意版本
+- ✅ 永久免费存储
+
+**配置方法**：查看 [GitHub自动备份配置.md](GitHub自动备份配置.md)
+
+#### 3. 定时备份（可选）
+
+使用Render Cron Jobs每天自动备份：
+- 📅 每日定时执行
+- 📤 发送到配置的Webhook
+
+**测试备份**：
+
+```bash
+# 测试Discord备份
+node test-discord.js
+
+# 测试GitHub备份
+node test-github-backup.js
+```
+
+**备份文件位置**：
+- 本地运行时数据：`server/data/*.json`
+- GitHub备份数据：`server/data/backup/*.json`
+
 ## 🏗️ 项目结构
 
 ```
 attendance-record-system/
-├── public/                 # 前端文件
-│   ├── index.html         # 主页面
-│   ├── style.css          # 样式文件
-│   ├── app.js             # 应用逻辑
-│   ├── sw.js              # Service Worker
-│   └── manifest.json      # PWA 配置
-├── server/                # 后端文件
-│   ├── server.js          # Express 服务器
-│   └── data/              # 数据存储目录
+├── public/                      # 前端文件
+│   ├── index.html              # 主页面
+│   ├── style.css               # 样式文件
+│   ├── app.js                  # 应用逻辑
+│   ├── sw.js                   # Service Worker
+│   └── manifest.json           # PWA 配置
+├── server/                     # 后端文件
+│   ├── server.js               # Express 服务器
+│   ├── backup-realtime.js      # 实时备份模块
+│   ├── backup-github.js        # GitHub自动备份
+│   └── data/                   # 数据存储目录
+│       ├── backup/             # GitHub备份目录
 │       └── .gitkeep
-├── package.json           # 项目配置
-├── .gitignore            # Git 忽略配置
-└── README.md             # 说明文档
+├── scripts/                    # 脚本工具
+│   └── backup.js               # 定时备份脚本
+├── test-discord.js             # Discord备份测试
+├── test-github-backup.js       # GitHub备份测试
+├── package.json                # 项目配置
+├── .env                        # 环境变量（需自己创建）
+├── .gitignore                  # Git 忽略配置
+└── README.md                   # 说明文档
 ```
 
 ## 💾 数据存储
 
-- 数据以 JSON 文件形式存储在 `server/data/` 目录
-- 每个用户一个独立的 JSON 文件（如 `张三.json`）
-- 支持本地浏览器存储（localStorage）作为离线备份
-- 无需安装数据库，开箱即用
+- **运行时数据**：存储在 `server/data/*.json`（本地运行）
+- **备份数据**：自动保存到 `server/data/backup/*.json`（提交到GitHub）
+- **每个用户**：独立的 JSON 文件（如 `张三.json`）
+- **离线备份**：支持本地浏览器存储（localStorage）
+- **云端备份**：Discord + GitHub双重保障
+- **无需数据库**：开箱即用
+
+### 备份策略
+
+| 备份方式 | 触发时机 | 存储位置 | 数据格式 |
+|----------|----------|----------|----------|
+| 本地文件 | 每次变更 | `server/data/` | JSON |
+| Discord | 每次变更（3秒防抖） | Discord频道 | JSON |
+| GitHub | 每次变更（3秒防抖） | GitHub仓库 | JSON |
+| 离线缓存 | 自动同步 | LocalStorage | JSON |
 
 ## 🌐 部署方案
 

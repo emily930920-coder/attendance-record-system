@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
+const { backupUserData, getBackupStatus } = require('./backup-realtime');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -41,6 +42,9 @@ async function readUserData(user) {
 async function writeUserData(user, data) {
     const filePath = getUserDataPath(user);
     await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+    
+    // 🔄 实时备份：数据写入后立即备份
+    backupUserData(data);
 }
 
 // API 路由
@@ -142,6 +146,15 @@ app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// 备份状态检查
+app.get('/api/backup/status', (req, res) => {
+    const status = getBackupStatus();
+    res.json({
+        ...status,
+        message: status.enabled ? '实时备份已启用' : '实时备份已禁用'
+    });
+});
+
 // 所有其他路由返回 index.html (SPA)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -163,8 +176,20 @@ async function startServer() {
         console.log('  - 支持多用户数据隔离');
         console.log('  - 支持离线模式和自动同步');
         console.log('  - 数据保存在 server/data 目录');
+        console.log('  - 实时备份已启用（数据变更时自动备份）');
         console.log('  - 按 Ctrl+C 停止服务器');
         console.log('='.repeat(60));
+        
+        // 显示备份状态
+        const backupStatus = getBackupStatus();
+        if (backupStatus.hasWebhook || backupStatus.hasDiscord) {
+            console.log('');
+            console.log('🔄 实时备份配置:');
+            if (backupStatus.hasWebhook) console.log('  ✅ Webhook备份已配置');
+            if (backupStatus.hasDiscord) console.log('  ✅ Discord备份已配置');
+            console.log('  💾 每次数据变更将自动备份');
+            console.log('');
+        }
     });
 }
 

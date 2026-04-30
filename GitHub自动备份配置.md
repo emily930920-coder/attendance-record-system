@@ -7,17 +7,26 @@
 2. 自动提交到Git仓库
 3. 自动推送到GitHub远程仓库
 
+**服务器重启（如Render部署）后**：
+1. 自动从 `server/data/backup/` 恢复所有用户数据
+2. 数据永不丢失，无缝恢复
+
 ## 📁 备份文件结构
 
 ```
 server/data/
 ├── backup/           # GitHub自动备份目录（会提交到Git）
 │   ├── .gitkeep
-│   ├── yangyang100_2026-04-30.json
-│   └── default_2026-04-30.json
+│   ├── yangyang100.json  # yangyang100用户的备份
+│   └── default.json      # default用户的备份
 ├── default.json      # 运行时数据（不提交到Git）
 └── yangyang100.json  # 运行时数据（不提交到Git）
 ```
+
+**文件命名规则**：
+- 每个用户一个固定文件：`用户名.json`
+- 不包含日期，每次备份覆盖同一文件
+- Git会自动记录所有版本历史
 
 ## ⚙️ 配置步骤
 
@@ -135,9 +144,10 @@ git config user.email "your.email@example.com"
 
 ### 4. 文件命名
 
-- 格式：`用户名_日期.json`
-- 同一天的备份会覆盖之前的文件
-- 不同天的备份会保留历史
+- 格式：`用户名.json`
+- 每个用户固定一个文件
+- 每次备份覆盖同文件
+- Git版本历史记录所有变更
 
 ## 🚀 启用/禁用
 

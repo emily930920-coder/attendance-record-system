@@ -158,6 +158,7 @@ attendance-record-system/
 │   ├── server.js               # Express 服务器
 │   ├── backup-realtime.js      # 实时备份模块
 │   ├── backup-github.js        # GitHub自动备份
+│   ├── restore-data.js         # 数据恢复模块
 │   └── data/                   # 数据存储目录
 │       ├── backup/             # GitHub备份目录
 │       └── .gitkeep
@@ -178,16 +179,23 @@ attendance-record-system/
 - **每个用户**：独立的 JSON 文件（如 `张三.json`）
 - **离线备份**：支持本地浏览器存储（localStorage）
 - **云端备份**：Discord + GitHub双重保障
+- **自动恢复**：服务器启动时自动从备份恢复数据
 - **无需数据库**：开箱即用
 
-### 备份策略
+### 备份与恢复策略
 
-| 备份方式 | 触发时机 | 存储位置 | 数据格式 |
-|----------|----------|----------|----------|
-| 本地文件 | 每次变更 | `server/data/` | JSON |
-| Discord | 每次变更（3秒防抖） | Discord频道 | JSON |
-| GitHub | 每次变更（3秒防抖） | GitHub仓库 | JSON |
-| 离线缓存 | 自动同步 | LocalStorage | JSON |
+| 备份方式 | 触发时机 | 存储位置 | 数据格式 | 恢复时机 |
+|----------|----------|----------|----------|----------|
+| 本地文件 | 每次变更 | `server/data/` | JSON | - |
+| Discord | 每次变更（3秒防抖） | Discord频道 | JSON | 手动 |
+| GitHub | 每次变更（3秒防抖） | GitHub仓库 | JSON | **服务器启动时自动** |
+| 离线缓存 | 自动同步 | LocalStorage | JSON | 联网时自动 |
+
+**Render部署恢复流程**：
+1. Render重启清空运行时数据
+2. 服务器启动，检测到 `backup/` 目录有数据
+3. 自动从 `backup/*.json` 恢复所有用户数据
+4. 用户访问系统，数据完整无损
 
 ## 🌐 部署方案
 

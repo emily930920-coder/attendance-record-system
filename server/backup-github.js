@@ -46,10 +46,9 @@ async function backupToGit(userData) {
             await fs.mkdir(BACKUP_CONFIG.backupDir, { recursive: true });
         }
 
-        // 2. 生成备份文件名
+        // 2. 生成备份文件名：用户名.json（不含日期）
         const date = new Date();
-        const timestamp = date.toISOString().replace(/[:.]/g, '-').split('T')[0];
-        const backupFileName = `${userData.user}_${timestamp}.json`;
+        const backupFileName = `${userData.user}.json`;
         const backupFilePath = path.join(BACKUP_CONFIG.backupDir, backupFileName);
 
         // 3. 写入备份数据

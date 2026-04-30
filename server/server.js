@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs').promises;
 const { backupUserData, getBackupStatus } = require('./backup-realtime');
+const { restoreFromBackup } = require('./restore-data');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -165,6 +166,9 @@ app.get('*', (req, res) => {
 async function startServer() {
     await ensureDataDir();
     
+    // 从备份恢复数据
+    await restoreFromBackup();
+    
     app.listen(PORT, () => {
         console.log('='.repeat(60));
         console.log('📋 工时记录系统服务器已启动');
@@ -177,6 +181,7 @@ async function startServer() {
         console.log('  - 支持多用户数据隔离');
         console.log('  - 支持离线模式和自动同步');
         console.log('  - 数据保存在 server/data 目录');
+        console.log('  - 服务器启动时自动从备份恢复数据');
         console.log('  - 实时备份已启用（数据变更时自动备份）');
         console.log('  - 按 Ctrl+C 停止服务器');
         console.log('='.repeat(60));
